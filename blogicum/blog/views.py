@@ -11,7 +11,7 @@ from .models import Post, Category, Comment
 
 # Create your views here.
 User = get_user_model()
-def get_posts():
+def get_posts_with_comments():
     return Post.objects.select_related(
         'category',
         'location',
@@ -20,7 +20,7 @@ def get_posts():
         is_published=True,
         category__is_published=True,
         pub_date__lte=timezone.now()
-    ).order_by('-pub_date')
+    ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
 def get_paginator(request, queryset, num_pages=10):
@@ -31,7 +31,7 @@ def get_paginator(request, queryset, num_pages=10):
 
 def index(request):
     template = 'blog/index.html'
-    posts = get_posts().annotate(comment_count=Count('comments'))
+    posts = get_posts_with_comments()
     page_obj = get_paginator(request, posts)
     context = {'page_obj': page_obj}
     return render(request, template, context)
@@ -67,8 +67,7 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True
     )
-    posts = get_posts().filter(
-        category=category).annotate(comment_count=Count('comments'))
+    posts = get_posts_with_comments().filter(category=category)
     page_obj = get_paginator(request, posts, 10)
     context = {
         'category': category,
