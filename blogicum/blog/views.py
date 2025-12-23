@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import get_user_model
+from django.views.generic import ListView
+from django.views.generic import DetailView
+from django.views.generic.edit import FormMixin
 
 from .forms import PostForm, CommentForm, UserForm
 from .models import Post, Category, Comment
@@ -11,16 +14,19 @@ from .models import Post, Category, Comment
 
 # Create your views here.
 User = get_user_model()
+
+
 def get_posts_with_comments():
-    return Post.objects.select_related(
-        'category',
-        'location',
-        'author'
-    ).filter(
-        is_published=True,
-        category__is_published=True,
-        pub_date__lte=timezone.now()
-    ).annotate(comment_count=Count('comments')).order_by('-pub_date')
+    return (
+        Post.objects.select_related('category', 'location', 'author')
+        .filter(
+            is_published=True,
+            category__is_published=True,
+            pub_date__lte=timezone.now()
+        )
+        .annotate(comment_count=Count('comments'))
+        .order_by('-pub_date')
+    )
 
 
 def get_paginator(request, queryset, num_pages=10):
@@ -29,51 +35,83 @@ def get_paginator(request, queryset, num_pages=10):
     return paginator.get_page(page_number)
 
 
-def index(request):
-    template = 'blog/index.html'
-    posts = get_posts_with_comments()
-    page_obj = get_paginator(request, posts)
-    context = {'page_obj': page_obj}
-    return render(request, template, context)
+class IndexView(ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'page_obj'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return get_posts_with_comments()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts = self.get_queryset()
+        page_obj = get_paginator(self.request, posts, self.paginate_by)
+        context['page_obj'] = page_obj
+        return context
 
 
-def post_detail(request, post_id):
-    template = 'blog/detail.html'
-    post = get_object_or_404(Post, id=post_id)
-    if request.user != post.author:
-        post = get_object_or_404(
-            Post,
-            id=post_id,
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now()
+class PostDetailView(FormMixin, DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    context_object_name = 'post'
+    form_class = CommentForm
+    pk_url_kwarg = 'post_id'
+
+    def get_object(self, queryset=None):
+        post = super().get_object(queryset)
+        if self.request.user != post.author:
+            post = get_object_or_404(
+                Post,
+                id=post.id,
+                is_published=True,
+                category__is_published=True,
+                pub_date__lte=timezone.now(),
+            )
+        return post
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post = self.get_object()
+        comments = Comment.objects.select_related('author').filter(post=post)
+        context['comments'] = comments
+        return context
+
+    def post(self, request):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.post = self.object
+            comment.save()
+            return redirect('blog:post_detail', post_id=self.object.id)
+        context = self.get_context_data(form=form)
+        return self.render_to_response(context)
+
+
+class CategoryPostsView(ListView):
+    model = Post
+    template_name = 'blog/category.html'
+    context_object_name = 'page_obj'
+
+    def get_category(self):
+        return get_object_or_404(
+            Category, slug=self.kwargs['category_slug'], is_published=True
         )
-    form = CommentForm(request.POST or None)
-    comments = Comment.objects.select_related(
-        'author'
-    ).filter(post=post)
-    context = {
-        'post': post,
-        'form': form,
-        'comments': comments
-    }
-    return render(request, template, context)
 
+    def get_queryset(self):
+        self.category = self.get_category()
+        return get_posts_with_comments().filter(category=self.category)
 
-def category_posts(request, category_slug):
-    template = 'blog/category.html'
-    category = get_object_or_404(
-        Category,
-        slug=category_slug,
-        is_published=True
-    )
-    posts = get_posts_with_comments().filter(category=category)
-    page_obj = get_paginator(request, posts, 10)
-    context = {
-        'category': category,
-        'page_obj': page_obj,
-    }
-    return render(request, template, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts = self.get_queryset()
+        page_obj = get_paginator(self.request, posts, 10)
+        context['page_obj'] = page_obj
+        context['category'] = self.get_category()
+        return context
 
 
 @login_required
@@ -85,7 +123,7 @@ def create_post(request):
         post.author = request.user
         post.save()
         return redirect('blog:profile', request.user)
-    context = {'form': form}
+    context = {"form": form}
     return render(request, template, context)
 
 
@@ -139,8 +177,7 @@ def edit_comment(request, post_id, comment_id):
     if form.is_valid():
         form.save()
         return redirect('blog:post_detail', post_id)
-    context = {'comment': comment,
-               'form': form}
+    context = {'comment': comment, 'form': form}
     return render(request, template, context)
 
 
@@ -159,9 +196,7 @@ def delete_comment(request, post_id, comment_id):
 
 def profile(request, username):
     template = 'blog/profile.html'
-    profile_user = get_object_or_404(
-        User,
-        username=username)
+    profile_user = get_object_or_404(User, username=username)
     posts = Post.objects.select_related('category', 'location', 'author')
     if request.user == profile_user:
         posts = posts.filter(author=profile_user)
@@ -170,13 +205,11 @@ def profile(request, username):
             author=profile_user,
             is_published=True,
             category__is_published=True,
-            pub_date__lte=timezone.now()
+            pub_date__lte=timezone.now(),
         )
-    posts = posts.annotate(comment_count=Count('comments')
-                           ).order_by('-pub_date')
+    posts = posts.annotate(comment_count=Count('comments')).order_by('-pub_date')
     page_obj = get_paginator(request, posts)
-    context = {'profile': profile_user,
-               'page_obj': page_obj}
+    context = {'profile': profile_user, 'page_obj': page_obj}
     return render(request, template, context)
 
 

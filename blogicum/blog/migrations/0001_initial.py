@@ -15,64 +15,179 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Category',
+            name="Category",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_published', models.BooleanField(default=True, help_text='Снимите галочку, чтобы скрыть публикацию.', verbose_name='Опубликовано')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Добавлено')),
-                ('title', models.CharField(max_length=256, verbose_name='Заголовок')),
-                ('description', models.TextField(verbose_name='Описание')),
-                ('slug', models.SlugField(help_text='Идентификатор страницы для URL; разрешены символы латиницы, цифры, дефис и подчёркивание.', unique=True, verbose_name='Идентификатор')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "is_published",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Снимите галочку, чтобы скрыть публикацию.",
+                        verbose_name="Опубликовано",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Добавлено"),
+                ),
+                ("title", models.CharField(max_length=256, verbose_name="Заголовок")),
+                ("description", models.TextField(verbose_name="Описание")),
+                (
+                    "slug",
+                    models.SlugField(
+                        help_text="Идентификатор страницы для URL; разрешены символы латиницы, цифры, дефис и подчёркивание.",
+                        unique=True,
+                        verbose_name="Идентификатор",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'категорию',
-                'verbose_name_plural': 'Категории',
+                "verbose_name": "категорию",
+                "verbose_name_plural": "Категории",
             },
         ),
         migrations.CreateModel(
-            name='Location',
+            name="Location",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_published', models.BooleanField(default=True, help_text='Снимите галочку, чтобы скрыть публикацию.', verbose_name='Опубликовано')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Добавлено')),
-                ('name', models.CharField(max_length=256, verbose_name='Название места')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "is_published",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Снимите галочку, чтобы скрыть публикацию.",
+                        verbose_name="Опубликовано",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Добавлено"),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=256, verbose_name="Название места"),
+                ),
             ],
             options={
-                'verbose_name': 'местоположение',
-                'verbose_name_plural': 'Местоположения',
+                "verbose_name": "местоположение",
+                "verbose_name_plural": "Местоположения",
             },
         ),
         migrations.CreateModel(
-            name='Post',
+            name="Post",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('is_published', models.BooleanField(default=True, help_text='Снимите галочку, чтобы скрыть публикацию.', verbose_name='Опубликовано')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Добавлено')),
-                ('title', models.CharField(max_length=256, verbose_name='Заголовок')),
-                ('text', models.TextField(verbose_name='Текст')),
-                ('pub_date', models.DateTimeField(help_text='Если установить дату и время в будущем — можно делать отложенные публикации.', verbose_name='Дата и время публикации')),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Автор публикации')),
-                ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='blog.category', verbose_name='Категория')),
-                ('location', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='blog.location', verbose_name='Местоположение')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "is_published",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Снимите галочку, чтобы скрыть публикацию.",
+                        verbose_name="Опубликовано",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Добавлено"),
+                ),
+                ("title", models.CharField(max_length=256, verbose_name="Заголовок")),
+                ("text", models.TextField(verbose_name="Текст")),
+                (
+                    "pub_date",
+                    models.DateTimeField(
+                        help_text="Если установить дату и время в будущем — можно делать отложенные публикации.",
+                        verbose_name="Дата и время публикации",
+                    ),
+                ),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Автор публикации",
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="blog.category",
+                        verbose_name="Категория",
+                    ),
+                ),
+                (
+                    "location",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="blog.location",
+                        verbose_name="Местоположение",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'публикацию',
-                'verbose_name_plural': 'Публикации',
+                "verbose_name": "публикацию",
+                "verbose_name_plural": "Публикации",
             },
         ),
         migrations.CreateModel(
-            name='Comment',
+            name="Comment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.TextField(verbose_name='Написать комментарий...')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('post', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='blog.post', verbose_name='Комментарий')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("text", models.TextField(verbose_name="Написать комментарий...")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "post",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comments",
+                        to="blog.post",
+                        verbose_name="Комментарий",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'комментарий',
-                'verbose_name_plural': 'Комментарии',
-                'ordering': ('created_at',),
+                "verbose_name": "комментарий",
+                "verbose_name_plural": "Комментарии",
+                "ordering": ("created_at",),
             },
         ),
     ]
